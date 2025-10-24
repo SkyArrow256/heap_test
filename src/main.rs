@@ -4,8 +4,8 @@ fn main() {
     let mut heap = Heap::new();
     let hello = "こんばんは！";
     let sleepy = "眠いですねー。";
-    let hello_ptr = unsafe { heap.alloc(hello.as_bytes()) };
-    let sleepy_ptr = unsafe { heap.alloc(sleepy.as_bytes()) };
+    let hello_ptr = unsafe { heap.add(hello.as_bytes()) };
+    let sleepy_ptr = unsafe { heap.add(sleepy.as_bytes()) };
 
     unsafe {
         println!(

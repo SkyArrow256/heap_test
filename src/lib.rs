@@ -26,25 +26,25 @@ impl Heap {
 
     /// メモリを確保してバイト列を書き込みます。可変アドレス値が戻ります。
     /// Null文字が最後に入ります。
-    pub unsafe fn alloc(&mut self, src: &[u8]) -> *mut u8 {
+    pub unsafe fn add(&mut self, src: &[u8]) -> *mut u8 {
         // Null文字分ひとつ多めに確保
         let layout = Layout::array::<u8>(src.len() + 1).unwrap();
-        let p = unsafe { alloc::alloc(layout) };
-        if p.is_null() {
-            panic!();
-        }
+        let ptr = unsafe { self.alloc(layout) };
         unsafe {
-            p.copy_from_nonoverlapping(src.as_ptr(), src.len());
-            // null文字を追加
-            *p.add(src.len()) = 0;
+            ptr.copy_from_nonoverlapping(src.as_ptr(), src.len());
+            *ptr.add(src.len()) = 0; // null文字を追加
         }
-        self.ptrs.push((p, layout));
-        p
+        ptr
     }
 
-    /// ガベージコレクタを起こします。起きろ〜〜〜〜！！！！　ゴミ拾いタイム！！！
-    pub unsafe fn gc() {
-        todo!()
+    /// Layoutを受けっとてメモリを確保し、ポインタを返します。
+    unsafe fn alloc(&mut self, layout: Layout) -> *mut u8 {
+        let ptr = unsafe { alloc::alloc(layout) };
+        if ptr.is_null() {
+            panic!();
+        }
+        self.ptrs.push((ptr, layout));
+        ptr
     }
 
     /// 文字列として参照します。
@@ -69,14 +69,18 @@ impl Heap {
     pub unsafe fn strcat(&mut self, lhs: *const u8, rhs: *const u8) -> *const u8 {
         let (lhs_len, rhs_len) = unsafe { (Self::strlen(lhs), Self::strlen(rhs)) };
         let layout = Layout::array::<u8>(lhs_len + rhs_len + 1).unwrap();
-        let new_ptr = unsafe { alloc::alloc(layout) };
+        let new_ptr = unsafe { self.alloc(layout) };
         unsafe {
             new_ptr.copy_from_nonoverlapping(lhs, lhs_len);
             new_ptr.add(lhs_len).copy_from_nonoverlapping(rhs, rhs_len);
             *new_ptr.add(layout.size()) = 0;
         }
-        self.ptrs.push((new_ptr, layout));
         new_ptr
+    }
+
+    /// ガベージコレクタを起こします。起きろ〜〜〜〜！！！！　ゴミ拾いタイム！！！
+    pub unsafe fn gc() {
+        todo!()
     }
 }
 
